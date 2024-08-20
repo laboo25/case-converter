@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 import Toast from "./Toast";
 import StarNameModal from "./StarNameModal";
 import { FaCopy } from "react-icons/fa6";
 import { BsAlphabetUppercase } from "react-icons/bs";
+import { PiClipboardTextFill } from "react-icons/pi";
 
 export default function App() {
   const [channel, setChannel] = useState("");
@@ -12,6 +13,7 @@ export default function App() {
   const [converterInput, setConverterInput] = useState("");
   const [toastMessage, setToastMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const converterInputRef = useRef(null);
 
   useEffect(() => {
     const savedChannel = localStorage.getItem("channel");
@@ -55,6 +57,12 @@ export default function App() {
     setToastMessage("Converter input copied!");
   };
 
+  const handlePasteConverterInput = async () => {
+    const text = await navigator.clipboard.readText();
+    setConverterInput(text);
+    setToastMessage("Text pasted!");
+  };
+
   const handleChannelChange = (e) => {
     setChannel(e.target.value);
   };
@@ -68,7 +76,9 @@ export default function App() {
   };
 
   const capitalizeWords = (str) => {
-    return str.replace(/\b\w/g, (char) => char.toUpperCase());
+    return str
+      .toLowerCase()
+      .replace(/(^\w|\s\w)/g, (match) => match.toUpperCase());
   };
 
   const handleUppercaseChannel = () => {
@@ -83,16 +93,46 @@ export default function App() {
     setConverterInput(e.target.value);
   };
 
+  const getSelectedTextInfo = () => {
+    const input = converterInputRef.current;
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    return { start, end, selectedText: input.value.substring(start, end) };
+  };
+
+  const replaceSelectedText = (replacement) => {
+    const input = converterInputRef.current;
+    const { start, end } = getSelectedTextInfo();
+    const newText = converterInput.slice(0, start) + replacement + converterInput.slice(end);
+    setConverterInput(newText);
+    input.setSelectionRange(start, start + replacement.length);
+  };
+
   const handleUppercaseConverter = () => {
-    setConverterInput(converterInput.toUpperCase());
+    const { selectedText, start, end } = getSelectedTextInfo();
+    if (start === end) { // No text selected
+      setConverterInput(converterInput.toUpperCase());
+    } else {
+      replaceSelectedText(selectedText.toUpperCase());
+    }
   };
 
   const handleCapitalizeConverter = () => {
-    setConverterInput(capitalizeWords(converterInput));
+    const { selectedText, start, end } = getSelectedTextInfo();
+    if (start === end) { // No text selected
+      setConverterInput(capitalizeWords(converterInput));
+    } else {
+      replaceSelectedText(capitalizeWords(selectedText));
+    }
   };
 
   const handleLowercaseConverter = () => {
-    setConverterInput(converterInput.toLowerCase());
+    const { selectedText, start, end } = getSelectedTextInfo();
+    if (start === end) { // No text selected
+      setConverterInput(converterInput.toLowerCase());
+    } else {
+      replaceSelectedText(selectedText.toLowerCase());
+    }
   };
 
   const handleCloseToast = () => {
@@ -100,11 +140,7 @@ export default function App() {
   };
 
   const handleOpenModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+    setIsModalOpen((prev) => !prev);
   };
 
   return (
@@ -113,6 +149,9 @@ export default function App() {
         <Toast message={toastMessage} onClose={handleCloseToast} />
       )}
       <div className="channel-copy">
+      <button className="cnl-btn" onClick={() => handleCopy(" ● ")}>
+      ● 
+        </button>
         <button className="cnl-btn" onClick={() => handleCopy("BLACKED")}>
           blkd
         </button>
@@ -190,20 +229,26 @@ export default function App() {
         <div className="extra-inpt">
           <input
             type="text"
+            ref={converterInputRef}
             value={converterInput}
             onChange={handleConverterInputChange}
           />
-          <div className="buttons">
-            <button onClick={handleUppercaseConverter}>UPPERCASE</button>
-            <button onClick={handleCapitalizeConverter}>Capitalize</button>
-            <button onClick={handleLowercaseConverter}>lowercase</button>
-            <button onClick={handleCopyConverterInput}>copy</button>
-          </div>
+          <button className="copy-btn" onClick={handleCopyConverterInput}><FaCopy/></button>
+          <button className="paste-btn" onClick={handlePasteConverterInput}><PiClipboardTextFill /></button>
+        </div>
+        <div className="buttons">
+          <button onClick={handleUppercaseConverter}>UPPERCASE</button>
+          <button onClick={handleCapitalizeConverter}>Capitalize</button>
+          <button onClick={handleLowercaseConverter}>lowercase</button>
         </div>
       </div>
       <div>
-        <button onClick={handleOpenModal}>stanames</button>
-        {isModalOpen && <StarNameModal onClose={handleCloseModal} />}
+        <button onClick={handleOpenModal} className="modal-toggle-button">
+          Star Names
+        </button>
+        <div className={`modal-container ${isModalOpen ? "open" : ""}`}>
+          {isModalOpen && <StarNameModal onClose={handleOpenModal} />}
+        </div>
       </div>
     </div>
   );
