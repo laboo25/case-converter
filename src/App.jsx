@@ -182,6 +182,18 @@ export default function App() {
         <button className="cnl-btn" onClick={() => handleCopy("KINK")}>
           kink
         </button>
+        <button className="cnl-btn" onClick={() => handleCopy("W4B")}>
+          w4b
+        </button>
+        <button className="cnl-btn" onClick={() => handleCopy("METART")}>
+          metart
+        </button>
+        <button className="cnl-btn" onClick={() => handleCopy("HEGRE")}>
+          hegre
+        </button>
+        <button className="cnl-btn" onClick={() => handleCopy("SEXART")}>
+          sexart
+        </button>
       </div>
       <section className="inputs">
         <button
